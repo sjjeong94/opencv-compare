@@ -3,6 +3,8 @@ import cv2
 import time
 import numpy as np
 
+def clip(x, x_min, x_max):
+    return min(max(x, x_min), x_max)
 
 class MouseHandler:
     def __init__(self, width, height, crop_size=64):
@@ -24,35 +26,40 @@ class MouseHandler:
         x1 = x - s // 2
         y1 = y - s // 2
 
-        x1 = np.clip(x1, 0, w - s - 1)
-        y1 = np.clip(y1, 0, h - s - 1)
+        x1 = clip(x1, 0, w - s)
+        y1 = clip(y1, 0, h - s)
 
         x2 = x1 + s
         y2 = y1 + s
 
         return x1, y1, x2, y2
 
+    def modify_crop_size(self, diff):
+        min_crop_size = 8
+        max_crop_size = min(self.w, self.h)
+        s = clip(self.s + diff, min_crop_size, max_crop_size)
+        self.s = s
 
-def compare(images: list, crop_size: int = 64, zoom: int = 4):
+
+
+def compare(images: list, crop_size: int = 64, zoom_size: int = 256):
     mh = MouseHandler(images[0].shape[1], images[0].shape[0], crop_size)
     cv2.namedWindow("image-compare")
     cv2.setMouseCallback("image-compare", mh.mouse_event, None)
 
-    zoom_size = (crop_size * zoom, crop_size * zoom)
     while True:
         x1, y1, x2, y2 = mh.get_crop_rect()
         views = []
         crops = []
         for image in images:
             view = image.copy()
-
             crops.append(
                 cv2.resize(
-                    image[y1:y2, x1:x2], zoom_size, interpolation=cv2.INTER_NEAREST
+                    image[y1:y2, x1:x2], (zoom_size, zoom_size), interpolation=cv2.INTER_NEAREST
                 )
             )
 
-            cv2.rectangle(view, (x1, y1), (x2, y2), (0, 255, 0), 1)
+            cv2.rectangle(view, (x1, y1), (x2-1, y2-1), (0, 255, 0), 1)
             views.append(view)
 
         views = np.concatenate(views, 1)
@@ -63,11 +70,20 @@ def compare(images: list, crop_size: int = 64, zoom: int = 4):
 
         if key == 27:
             break
-        if key == ord("c"):
+        if key == ord("c") or key == ord("C"):
             capture_dir = "./captures"
             os.makedirs(capture_dir, exist_ok=True)
             capture_path = os.path.join(capture_dir, f"{time.time_ns()}.png")
             cv2.imwrite(capture_path, crops)
             print("Capture Image ->", capture_path)
+        elif key == ord("a") or key == ord("A"):
+            mh.modify_crop_size(-4)
+        elif key == ord("s") or key == ord("S"):
+            mh.modify_crop_size(+4)
+        elif key == ord("z") or key == ord("Z"):
+            zoom_size = clip(zoom_size - 4, 32, 512)
+        elif key == ord("x") or key == ord("X"):
+            zoom_size = clip(zoom_size + 4, 32, 512)
+            
 
     cv2.destroyAllWindows()

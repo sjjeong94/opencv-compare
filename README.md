@@ -22,5 +22,15 @@ image3 = cv2.imread("image3.png")
 compare([image1, image2, image3])
 ```
 
+## Commands
+| Key Input | Action                 |
+| --------- | ---------------------- |
+| ESC       | exit                   |
+| C         | capture cropped images |
+| A         | decrease the crop size |
+| S         | increase the crop size |
+| Z         | decrease the zoom size |
+| X         | increase the zoom size |
+
 ### License
 MIT

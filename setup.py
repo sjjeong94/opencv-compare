@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setup(
     name="opencv-compare",
-    version="0.0.2",
+    version="0.0.3",
     author="sjjeong94",
     author_email="sjjeong94@gmail.com",
     packages=["opencv_compare"],
